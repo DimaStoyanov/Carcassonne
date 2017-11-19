@@ -1,18 +1,11 @@
 package servlets;
 
-import cashe.SessionCache;
-import com.google.gson.Gson;
 import dbService.dataSets.PlayersDataSet;
 import dbService.exceptions.DBException;
-import dbService.services.DBServicesContainer;
-import de.mkammerer.argon2.Argon2;
-import de.mkammerer.argon2.Argon2Factory;
-import messages.ErrorMsg;
+import messages.DefaultMsg;
 import messages.TokenMsg;
 import utils.RandomHash;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -22,64 +15,54 @@ import java.io.IOException;
  */
 
 
-public class SignInServlet extends HttpServlet {
+public class SignInServlet extends AbstractHttpServlet {
 
-    private final DBServicesContainer dbServices;
-    private final SessionCache sessionCache;
-    private final Gson gson;
 
     public SignInServlet() {
-        dbServices = DBServicesContainer.getInstance();
-        sessionCache = SessionCache.getInstance();
-        gson = new Gson();
+        super();
     }
 
     @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        resp.setContentType("text/html;charset=utf-8");
+    protected void processPostRequest(HttpServletRequest req, HttpServletResponse resp) throws DBException, IOException {
         String username = req.getParameter("username");
         String password = req.getParameter("password");
 
+
         if (username == null || password == null) {
-            resp.getWriter().write(gson.toJson(new ErrorMsg("Some parameters are missed", 300)));
-            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            sendCallback(resp, new DefaultMsg("Some parameters are missed", MSG_PARAM_MISSED));
             return;
         }
-        try {
-            PlayersDataSet player = dbServices.getPlayersDBService()
-                    .getPlayerByUsername(username);
-            Argon2 argon2 = Argon2Factory.create();
 
-            if (player == null || !argon2.verify(player.getPasswordHash(), password)) {
-                resp.getWriter().write(gson.toJson(
-                        new ErrorMsg("Incorrect username/password", 306)
-                ));
-                resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                return;
-            }
+        PlayersDataSet player = dbServices.getPlayersDBService().getPlayerByUsername(username);
 
-            if (!player.isConfirmedEmail()) {
-                resp.getWriter().write(gson.toJson(
-                        new ErrorMsg("Email address does not confirmed", 307)
-                ));
-                resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                return;
-            }
-
-
-            String token = RandomHash.nextHash(16);
-            sessionCache.addSession(token, username);
-            resp.getWriter().write(gson.toJson(
-                    new TokenMsg(token)
-            ));
-            resp.setStatus(HttpServletResponse.SC_OK);
-
-        } catch (DBException e) {
-            e.printStackTrace();
-            resp.getWriter().write(gson.toJson(
-                    new ErrorMsg("Internal server error", 304)
-            ));
-            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        if (player == null || !argon2.verify(player.getPasswordHash(), password)) {
+            sendCallback(resp, new DefaultMsg("Incorrect username/password", MSG_INCORRECT_LOGIN));
+            return;
         }
+
+        if (!player.isConfirmedEmail()) {
+            sendCallback(resp,
+                    new DefaultMsg("Email address does not confirmed", MSG_EMAIL_NOT_VERIFIED));
+            return;
+        }
+
+        // Generate unique token
+        String token;
+        int iterations = 0;
+        do {
+            iterations++;
+            token = RandomHash.nextHash(32);
+            if (iterations > 100) {
+                log.error("Can't generate unique hash. Done over 100 iterations");
+                sendServerInternalErrorCallback(resp);
+                return;
+            }
+        } while (redisService.getUsernameBySession(token) != null);
+
+        redisService.addSession(token, username);
+        log.info(String.format("Player %s signed in", username));
+        sendCallback(resp, new TokenMsg(token, MSG_TOKEN));
+
+
     }
 }

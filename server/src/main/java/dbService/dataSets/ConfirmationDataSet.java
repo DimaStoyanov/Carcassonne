@@ -17,7 +17,7 @@ public class ConfirmationDataSet extends AbstractDataSet {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
-    @Column(name = "confirmationKey", updatable = false)
+    @Column(name = "confirmationKey", unique = true)
     private String confirmationKey;
 
     @Column(name = "username", updatable = false, unique = true)

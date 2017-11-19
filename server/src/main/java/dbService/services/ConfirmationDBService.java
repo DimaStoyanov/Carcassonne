@@ -13,12 +13,15 @@ public class ConfirmationDBService extends AbstractDBService {
         super(ConfirmationDataSet.class);
     }
 
-    @SuppressWarnings("UnusedReturnValue")
-    public long addNote(String confirmationKey, String username) throws DBException {
-        return super.addNote(new ConfirmationDataSet(confirmationKey, username));
+    public void addNote(String confirmationKey, String username) throws DBException {
+        super.addNote(new ConfirmationDataSet(confirmationKey, username));
     }
 
-    public ConfirmationDataSet getNote(String confirmationKey) throws DBException {
+    public ConfirmationDataSet getNoteByConfirmationKey(String confirmationKey) throws DBException {
         return super.getNote("confirmationKey", confirmationKey);
+    }
+
+    public ConfirmationDataSet getNoteByUsername(String username) throws DBException {
+        return super.getNote("username", username);
     }
 }

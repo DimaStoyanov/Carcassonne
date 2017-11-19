@@ -5,37 +5,44 @@ package messages;
  */
 
 
-public abstract class AbstractMsg {
+public class DefaultMsg {
 
     /**
      * Unique code of message. Every error has different code.
      */
-    @SuppressWarnings("FieldCanBeLocal")
+    @SuppressWarnings({"FieldCanBeLocal", "unused"})
     private final int code;
 
 
     /**
      * Type of message (e.g. Error message)
      */
-    @SuppressWarnings("FieldCanBeLocal")
+    @SuppressWarnings({"FieldCanBeLocal", "unused"})
     private final Type type;
 
 
     /**
      * Description of message
      */
-    @SuppressWarnings("FieldCanBeLocal")
+    @SuppressWarnings({"FieldCanBeLocal", "unused"})
     private final String description;
 
-    AbstractMsg(Type type, int code, String description) {
+    DefaultMsg(Type type, int code, String description) {
         this.type = type;
         this.code = code;
         this.description = description;
     }
 
+    public DefaultMsg(String description, int code) {
+        this(Type.DEFAULT, code, description);
+    }
+
+    public int getCode() {
+        return code;
+    }
 
     enum Type {
-        ERROR, OK, TOKEN
+        DEFAULT, TOKEN, EMAIL
     }
 
 }

@@ -10,6 +10,8 @@ import java.util.Random;
 
 public class RandomHash {
 
+    private static final Random random = new Random();
+
     private static final String upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
     private static final String lower = upper.toLowerCase(Locale.ROOT);
@@ -20,7 +22,6 @@ public class RandomHash {
 
 
     public static String nextHash(int length) {
-        Random random = new Random();
         char buf[] = new char[length];
         char symbols[] = alphanum.toCharArray();
         for (int i = 0; i < length; i++) {
@@ -28,4 +29,5 @@ public class RandomHash {
         }
         return new String(buf);
     }
+
 }

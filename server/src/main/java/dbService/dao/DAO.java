@@ -35,5 +35,9 @@ public class DAO {
     public void updateNote(AbstractDataSet dataSet) {
         session.update(dataSet);
     }
+
+    public void addOrUpdateNote(AbstractDataSet dataSet) {
+        session.saveOrUpdate(dataSet);
+    }
 }
 

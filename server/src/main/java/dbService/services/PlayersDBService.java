@@ -15,9 +15,8 @@ public class PlayersDBService extends AbstractDBService {
         super(PlayersDataSet.class);
     }
 
-    @SuppressWarnings("UnusedReturnValue")
-    public long addPlayer(String username, String password, String email) throws DBException {
-        return super.addNote(new PlayersDataSet(username, password, email));
+    public void addPlayer(String username, String password, String email) throws DBException {
+        super.addNote(new PlayersDataSet(username, password, email));
     }
 
 
@@ -25,7 +24,6 @@ public class PlayersDBService extends AbstractDBService {
         return super.getNote("username", username);
     }
 
-    @SuppressWarnings("WeakerAccess")
     public PlayersDataSet getPlayerByEmail(String email) throws DBException {
         return super.getNote("email", email);
     }

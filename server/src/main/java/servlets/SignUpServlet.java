@@ -1,19 +1,11 @@
 package servlets;
 
-import com.google.gson.Gson;
 import dbService.exceptions.DBException;
-import dbService.services.DBServicesContainer;
-import de.mkammerer.argon2.Argon2;
-import de.mkammerer.argon2.Argon2Factory;
-import messages.AbstractMsg;
-import messages.ErrorMsg;
-import messages.OKMsg;
+import messages.DefaultMsg;
 import utils.RandomHash;
 import utils.SendEmail;
 
 import javax.mail.MessagingException;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -23,19 +15,16 @@ import java.io.IOException;
  */
 
 
-public class SignUpServlet extends HttpServlet {
+public class SignUpServlet extends AbstractHttpServlet {
 
-    private final DBServicesContainer dbServices;
-    private final Gson gson;
-    private final String hostIP = "178.70.217.88";
 
     public SignUpServlet() {
-        dbServices = DBServicesContainer.getInstance();
-        gson = new Gson();
+        super();
     }
 
     @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    protected void processPostRequest(HttpServletRequest req, HttpServletResponse resp)
+            throws DBException, IOException {
         resp.setContentType("text/html;charset=utf-8");
         String username = req.getParameter("username");
         String password = req.getParameter("password");
@@ -43,71 +32,62 @@ public class SignUpServlet extends HttpServlet {
 
 
         if (username == null || password == null || email == null) {
-            sendCallback(resp, new ErrorMsg("Some parameters are missed", 300));
-            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            sendCallback(resp, new DefaultMsg("Some parameters are missed", MSG_PARAM_MISSED));
             return;
         }
 
 
-        try {
 
             if (!dbServices.getPlayersDBService().isUsernameUnique(username)) {
-                sendCallback(resp, new ErrorMsg("Not unique username", 301));
-                resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                sendCallback(resp, new DefaultMsg("Not unique username", MSG_DUPLICATE_USERNAME));
                 return;
             }
 
             if (!dbServices.getPlayersDBService().isEmailUnique(email)) {
-                sendCallback(resp, new ErrorMsg("Not unique email address", 302));
-                resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                sendCallback(resp, new DefaultMsg("Not unique email address", MSG_DUPLICATE_EMAIL));
                 return;
             }
 
-            Argon2 argon2 = Argon2Factory.create();
             String passwordHash = argon2.hash(2, 65536, 1, password);
             if (!argon2.verify(passwordHash, password)) {
-                sendCallback(resp, new ErrorMsg("Server internal error", 304));
-                resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                log.error(String.format("Argon2 generated hash error: " +
+                        "password=%s passwordHash=%s", password, passwordHash));
+                sendServerInternalErrorCallback(resp);
                 return;
             }
 
-            String confirmationKey = RandomHash.nextHash(16);
-            String header = "Confirmation your Carcassonne account";
-            String body = " thanks for creating a Carcassonne account. We are happy you found us.\n" +
-                    "To confirm you account, please follow this link.";
-            String hostname = hostIP + ":8080";
-            String path = "/confirmation";
+        // Generate unique hash
+        String confirmationKey;
+        int iterations = 0;
+        do {
+            iterations++;
+            if (iterations > 100) {
+                log.error("Can't generate unique hash. Done over 100 iterations");
+                sendServerInternalErrorCallback(resp);
+                return;
+            }
+            confirmationKey = RandomHash.nextHash(32);
+        } while (dbServices.getConfirmationDBService().getNoteByConfirmationKey(confirmationKey) != null);
 
             try {
-
-                if (!SendEmail.sendMsg(email, header,
-                        String.format("Dear %s,%s\n%s%s?confirmationKey=%s",
-                                username, body, hostname, path, confirmationKey))) {
-                    sendCallback(resp, new ErrorMsg("Invalid email address", 303));
-                    resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                if (!SendEmail.sendSignUpLetter(email, username, confirmationKey)) {
+                    log.debug(String.format("Email address %s does not exist", email));
+                    sendCallback(resp, new DefaultMsg("Invalid email address", MSG_INVALID_EMAIL));
                     return;
                 }
 
             } catch (MessagingException e) {
-                e.printStackTrace();
-                sendCallback(resp,
-                        new ErrorMsg("Can't send email. It can be internal server error", 304));
-                resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                log.error(String.format("An error occurred while sending the message to %s", email), e);
+                sendServerInternalErrorCallback(resp);
                 return;
             }
 
             dbServices.getConfirmationDBService().addNote(confirmationKey, username);
             dbServices.getPlayersDBService().addPlayer(username, passwordHash, email);
-            sendCallback(resp, new OKMsg("Need confirm email: " + email, 100));
-            resp.setStatus(HttpServletResponse.SC_OK);
-        } catch (DBException e) {
-            e.printStackTrace();
-            sendCallback(resp, new ErrorMsg("Internal server error.", 304));
-            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-        }
+        log.info(String.format("Player %s signed up", username));
+        sendCallback(resp, new DefaultMsg("Need confirm email: " + email, MSG_NEED_CONFIRMATION));
+
     }
 
-    private void sendCallback(HttpServletResponse resp, AbstractMsg msg) throws IOException {
-        resp.getWriter().write(gson.toJson(msg));
-    }
+
 }

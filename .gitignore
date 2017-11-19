@@ -1,5 +1,2 @@
 .idea/*
-Будет удалено .gitignore
-Будет удалено src/main/resources/
-Будет удалено src/test/
-Будет удалено target/
+log_file.log

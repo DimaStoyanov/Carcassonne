@@ -4,9 +4,7 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.HandlerList;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
-import servlets.ConfirmEmailServlet;
-import servlets.SignInServlet;
-import servlets.SignUpServlet;
+import servlets.*;
 
 /**
  * Created by Dmitrii Stoianov
@@ -22,10 +20,16 @@ public class Main {
         dbServices.printConnectInfo();
 
 
+
         ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
-        context.addServlet(new ServletHolder(new SignUpServlet()), "/signup");
-        context.addServlet(new ServletHolder(new SignInServlet()), "/signin");
-        context.addServlet(new ServletHolder(new ConfirmEmailServlet()), "/confirmation");
+
+        context.addServlet(new ServletHolder(new SignUpServlet()), "/sign_up");
+        context.addServlet(new ServletHolder(new SignInServlet()), "/sign_in");
+        context.addServlet(new ServletHolder(new VerifyAccountServlet()), "/verify");
+        context.addServlet(new ServletHolder(new SetPasswordServlet()), "/set_password");
+        context.addServlet(new ServletHolder(new ResetPasswordServlet()), "/reset_password");
+        context.addServlet(new ServletHolder(new SendEmailServlet()), "/send_email");
+
         HandlerList handlers = new HandlerList();
         handlers.setHandlers(new Handler[]{context});
 

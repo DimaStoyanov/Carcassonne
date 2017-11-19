@@ -15,10 +15,12 @@ public class DBServicesContainer {
 
     private final PlayersDBService playersDBService;
     private final ConfirmationDBService confirmationDBService;
+    private final ResetAccountDBService resetAccountDBService;
 
     private DBServicesContainer() {
         this.confirmationDBService = new ConfirmationDBService();
         this.playersDBService = new PlayersDBService();
+        this.resetAccountDBService = new ResetAccountDBService();
     }
 
     public ConfirmationDBService getConfirmationDBService() {
@@ -27,6 +29,10 @@ public class DBServicesContainer {
 
     public PlayersDBService getPlayersDBService() {
         return playersDBService;
+    }
+
+    public ResetAccountDBService getResetAccountDBService() {
+        return resetAccountDBService;
     }
 
     public void printConnectInfo() {

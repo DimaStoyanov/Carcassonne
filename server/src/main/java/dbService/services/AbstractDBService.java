@@ -14,6 +14,7 @@ import org.hibernate.service.ServiceRegistry;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.function.Function;
 
 
 /**
@@ -23,7 +24,7 @@ import java.sql.SQLException;
 
 public abstract class AbstractDBService {
     private static final String hibernate_show_sql = "true";
-    private static final String hibernate_hbm2ddl_auto = "create";
+    private static final String hibernate_hbm2ddl_auto = "update";
 
 
     private final SessionFactory sessionFactory;
@@ -44,7 +45,7 @@ public abstract class AbstractDBService {
         configuration.setProperty("hibernate.connection.driver_class", "org.postgresql.Driver");
         configuration.setProperty("hibernate.connection.url", "jdbc:postgresql://localhost/users");
         configuration.setProperty("hibernate.connection.username", "postgres");
-        configuration.setProperty("hibernate.connection.password", "postgres");
+        configuration.setProperty("hibernate.connection.password", "password");
         configuration.setProperty("hibernate.show_sql", hibernate_show_sql);
         configuration.setProperty("hibernate.hbm2ddl.auto", hibernate_hbm2ddl_auto);
         return configuration;
@@ -85,41 +86,44 @@ public abstract class AbstractDBService {
     }
 
 
-    long addNote(AbstractDataSet dataSet) throws DBException {
+    private void makeTransaction(Function<DAO, Void> function) throws DBException {
         try {
             Session session = sessionFactory.openSession();
             Transaction transaction = session.beginTransaction();
-            long id = new DAO(session).addNote(dataSet);
+            function.apply(new DAO(session));
             transaction.commit();
             session.close();
-            return id;
         } catch (HibernateException e) {
             throw new DBException(e);
         }
+    }
+
+    void addNote(AbstractDataSet dataSet) throws DBException {
+        makeTransaction(dao -> {
+            dao.addNote(dataSet);
+            return null;
+        });
     }
 
     public void deleteNote(AbstractDataSet dataSet) throws DBException {
-        try {
-            Session session = sessionFactory.openSession();
-            Transaction transaction = session.beginTransaction();
-            new DAO(session).deleteNote(dataSet);
-            transaction.commit();
-            session.close();
-        } catch (HibernateException e) {
-            throw new DBException(e);
-        }
+        makeTransaction(dao -> {
+            dao.deleteNote(dataSet);
+            return null;
+        });
     }
 
     public void updateNote(AbstractDataSet dataSet) throws DBException {
-        try {
-            Session session = sessionFactory.openSession();
-            Transaction transaction = session.beginTransaction();
-            new DAO(session).updateNote(dataSet);
-            transaction.commit();
-            session.close();
-        } catch (HibernateException e) {
-            throw new DBException(e);
-        }
+        makeTransaction(dao -> {
+            dao.updateNote(dataSet);
+            return null;
+        });
+    }
+
+    public void addOrUpdateNote(AbstractDataSet dataSet) throws DBException {
+        makeTransaction(dao -> {
+            dao.addOrUpdateNote(dataSet);
+            return null;
+        });
     }
 
 
