@@ -1,14 +1,19 @@
-package servlets;
+package servlets.authorisation;
 
 import dbService.dataSets.PlayersDataSet;
 import dbService.exceptions.DBException;
 import messages.DefaultMsg;
 import messages.TokenMsg;
+import servlets.AbstractHttpServlet;
 import utils.RandomHash;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Created by Dmitrii Stoianov
@@ -33,6 +38,17 @@ public class SignInServlet extends AbstractHttpServlet {
             return;
         }
 
+        // Start generating hash asynchronously
+        FutureTask<String> hashTask = new FutureTask<>(() -> {
+            // Generate unique hash
+            String token;
+            do {
+                token = RandomHash.nextHash(32);
+            } while (redisService.getUsernameBySession(token) != null);
+            return token;
+        });
+        new Thread(hashTask).start();
+
         PlayersDataSet player = dbServices.getPlayersDBService().getPlayerByUsername(username);
 
         if (player == null || !argon2.verify(player.getPasswordHash(), password)) {
@@ -48,16 +64,17 @@ public class SignInServlet extends AbstractHttpServlet {
 
         // Generate unique token
         String token;
-        int iterations = 0;
-        do {
-            iterations++;
-            token = RandomHash.nextHash(32);
-            if (iterations > 100) {
-                log.error("Can't generate unique hash. Done over 100 iterations");
-                sendServerInternalErrorCallback(resp);
-                return;
-            }
-        } while (redisService.getUsernameBySession(token) != null);
+        try {
+            token = hashTask.get(5, TimeUnit.SECONDS);
+        } catch (ExecutionException | InterruptedException e) {
+            log.error("Generating session hash exception", e);
+            sendServerInternalErrorCallback(resp);
+            return;
+        } catch (TimeoutException e) {
+            log.error("Generate session hash too slow", e);
+            sendServerInternalErrorCallback(resp);
+            return;
+        }
 
         redisService.addSession(token, username);
         log.info(String.format("Player %s signed in", username));

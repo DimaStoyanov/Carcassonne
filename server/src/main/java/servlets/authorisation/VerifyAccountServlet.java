@@ -1,9 +1,10 @@
-package servlets;
+package servlets.authorisation;
 
 import dbService.dataSets.ConfirmationDataSet;
 import dbService.dataSets.PlayersDataSet;
 import dbService.exceptions.DBException;
 import messages.DefaultMsg;
+import servlets.AbstractHttpServlet;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -25,7 +26,6 @@ public class VerifyAccountServlet extends AbstractHttpServlet {
     protected void processPostRequest(HttpServletRequest req, HttpServletResponse resp)
             throws DBException, IOException {
 
-        System.out.println(req.getRemoteAddr());
         String confirmationKey = req.getParameter("confirmationKey");
 
 

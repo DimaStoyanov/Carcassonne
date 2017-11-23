@@ -1,10 +1,11 @@
-package servlets;
+package servlets.authorisation;
 
 import dbService.dataSets.PlayersDataSet;
 import dbService.dataSets.ResetAccountDataSet;
 import dbService.exceptions.DBException;
 import messages.DefaultMsg;
 import messages.EmailMsg;
+import servlets.AbstractHttpServlet;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;

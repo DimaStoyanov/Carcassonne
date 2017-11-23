@@ -1,68 +1,32 @@
 package utils;
 
+import org.apache.log4j.Logger;
+
 import javax.mail.*;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import java.util.Date;
 import java.util.Properties;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Created by Dmitrii Stoianov
  */
 
 
-public class SendEmail {
+public final class SendEmail {
+
+    private static ExecutorService executorService = Executors.newSingleThreadExecutor();
 
 
     private static final String CLIENT_URL = "DimaStoyanov.github.io/Carcassonne/client";
 
 
-    private static boolean sendMsg(String to, String subject, String body) throws MessagingException {
-
-        final String SSL_FACTORY = "javax.net.ssl.SSLSocketFactory";
-        Properties props = System.getProperties();
-        props.setProperty("mail.smtp.host", "smtp.gmail.com");
-        props.setProperty("mail.smtp.socketFactory.class", SSL_FACTORY);
-        props.setProperty("mail.smtp.socketFactory.fallback", "false");
-        props.setProperty("mail.smtp.port", "465");
-        props.setProperty("mail.smtp.socketFactory.port", "465");
-        props.put("mail.smtp.auth", "true");
-        props.put("mail.store.protocol", "pop3");
-        props.put("mail.transport.protocol", "smtp");
-        final String username = "carcassone.game@gmail.com";
-        final String password = "ConcurentHashMap";
-
-
-        try {
-
-
-            final Session session = Session.getDefaultInstance(props,
-                    new Authenticator() {
-                        protected PasswordAuthentication getPasswordAuthentication() {
-                            return new PasswordAuthentication(username, password);
-                        }
-                    });
-
-            Message msg = new MimeMessage(session);
-
-            msg.setFrom(new InternetAddress("carcassonne.game@gmail.com"));
-            msg.setRecipients(Message.RecipientType.TO,
-                    InternetAddress.parse(to, false));
-            msg.setSubject(subject);
-            msg.setContent(body, "text/html");
-            msg.saveChanges();
-            msg.setSentDate(new Date());
-            Transport.send(msg);
-        } catch (SendFailedException e) {
-            e.printStackTrace();
-            return false;
-        }
-        return true;
+    private SendEmail() {
     }
 
-
-    public static boolean sendSignUpLetter(String to, String username, String token)
-            throws MessagingException {
+    public static void sendSignUpLetter(String to, String username, String token) {
         String header = "Carcassonne Game account verification for " + username;
         String body = String.format("Hello %s!<br><br>" +
                         "" +
@@ -76,11 +40,10 @@ public class SendEmail {
                         "Thanks,<br>" +
                         "The Carcassonne Game Team<br>",
                 username, CLIENT_URL, token);
-        return sendMsg(to, header, body);
+        executorService.execute(new SendEmailRunnable(to, header, body));
     }
 
-    public static boolean sendLostPasswordLetter(String to, String username, String token)
-            throws MessagingException {
+    public static void sendLostPasswordLetter(String to, String username, String token) {
         String header = "Password Reset Request - Carcassonne Game";
         String body = String.format("Hi %s,<br><br>" +
                 "" +
@@ -96,7 +59,70 @@ public class SendEmail {
                 "" +
                 "Thanks,<br>" +
                 "Carcassonne Game Team<br>", username, username, CLIENT_URL, token);
-        return sendMsg(to, header, body);
+        executorService.execute(new SendEmailRunnable(to, header, body));
     }
 
+
+    private static class SendEmailRunnable implements Runnable {
+
+
+        private static final Logger log = Logger.getLogger(SendEmail.class);
+
+        private static final String SSL_FACTORY = "javax.net.ssl.SSLSocketFactory";
+
+        private static final Properties props = System.getProperties();
+
+        private static final String username = "carcassone.game@gmail.com";
+        private static final String password = "ConcurentHashMap";
+
+        static {
+            props.setProperty("mail.smtp.host", "smtp.gmail.com");
+            props.setProperty("mail.smtp.socketFactory.class", SSL_FACTORY);
+            props.setProperty("mail.smtp.socketFactory.fallback", "false");
+            props.setProperty("mail.smtp.port", "465");
+            props.setProperty("mail.smtp.socketFactory.port", "465");
+            props.put("mail.smtp.auth", "true");
+            props.put("mail.store.protocol", "pop3");
+            props.put("mail.transport.protocol", "smtp");
+        }
+
+        private final String to;
+        private final String header;
+        private final String body;
+
+        SendEmailRunnable(String to, String header, String body) {
+            this.to = to;
+            this.header = header;
+            this.body = body;
+        }
+
+
+        @Override
+        public void run() {
+
+            try {
+
+                final Session session = Session.getDefaultInstance(props,
+                        new Authenticator() {
+                            protected PasswordAuthentication getPasswordAuthentication() {
+                                return new PasswordAuthentication(username, password);
+                            }
+                        });
+
+                Message msg = new MimeMessage(session);
+
+                msg.setFrom(new InternetAddress("carcassonne.game@gmail.com"));
+                msg.setRecipients(Message.RecipientType.TO,
+                        InternetAddress.parse(to, false));
+                msg.setSubject(header);
+                msg.setContent(body, "text/html");
+                msg.saveChanges();
+                msg.setSentDate(new Date());
+                Transport.send(msg);
+            } catch (MessagingException e) {
+                log.error("Error sending email", e);
+            }
+        }
+
+    }
 }

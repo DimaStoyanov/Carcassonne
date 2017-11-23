@@ -23,7 +23,7 @@ import java.util.function.Function;
 
 
 public abstract class AbstractDBService {
-    private static final String hibernate_show_sql = "true";
+    private static final String hibernate_show_sql = "false";
     private static final String hibernate_hbm2ddl_auto = "update";
 
 

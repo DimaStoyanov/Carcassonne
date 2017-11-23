@@ -8,7 +8,10 @@ import java.util.Random;
  */
 
 
-public class RandomHash {
+public final class RandomHash {
+
+    private RandomHash() {
+    }
 
     private static final Random random = new Random();
 
