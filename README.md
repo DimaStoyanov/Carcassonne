@@ -9,6 +9,7 @@
 
 
 ### Database
-<img alt="ER Diagram" src="https://pp.userapi.com/c830608/v830608267/8c438/ZIZm_f3nKDQ.jpg" height="178px">
+<img alt="ER Diagram" src="https://pp.userapi.com/c830608/v830608267/8c438/ZIZm_f3nKDQ.jpg" height="178px">  
+
 There is no links between tables, because all tables have the same id. Also often `players_reset` and `players_verify` has less entities than in `players`, so finding entitiy will be faster than if all fields were in the same table.
  
