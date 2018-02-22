@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sign in</title>
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    <script>
+        function onSubmit(token) {
+            document.getElementById("sign_in").submit();
+        }
+    </script>
+</head>
+<body>
+
+
+<form id="sign_in" action="https://carcassonne-alpine-meadows.herokuapp.com/signing_in" method="POST">
+    Username: <input type="text" name="username" required><br><br>
+    Password: <input type="password" name="password" required>
+    <br>
+    <button
+            class="g-recaptcha"
+            data-sitekey="6LdIYToUAAAAABwwP2YaGgGMv9eaOhlVLz0s3KIa"
+            data-callback="onSubmit">
+        Submit
+    </button>
+</form>
+<br><a href="sign_up.html"> Sign up </a>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<a href="https://carcassonne-alpine-meadows.herokuapp.com/reset.html"> Reset password </a>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<a href="https://carcassonne-alpine-meadows.herokuapp.com/send_email.html"> I don't receive a letter</a>
+</body>
+</html>

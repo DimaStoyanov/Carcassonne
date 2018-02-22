@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Send email</title>
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    <script>
+        function onSubmit(token) {
+            document.getElementById("send_email").submit();
+        }
+    </script>
+</head>
+<body>
+
+
+<form id="send_email" action="https://carcassonne-alpine-meadows.herokuapp.com/send_email_req" method="POST">
+    <p> Select type: </p>
+    <input type="radio" name="type" checked="checked" value="sign_up" id="sing_up" required >
+    <label for="sing_up"> Sign up letter</label>
+    <br><input type="radio" name="type" value="reset" id="reset" required>
+    <label for="reset"> Reset password letter </label>
+    <br><br><label for="login"> Username or email: </label>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    <input type="text" id="login" name="login" required><br><br>
+    <label for="password"> Password (required if need to reset password): </label>
+    <input id="password" type="password" name="password">
+
+    <br>
+    <button
+            class="g-recaptcha"
+            data-sitekey="6LdIYToUAAAAABwwP2YaGgGMv9eaOhlVLz0s3KIa"
+            data-callback="onSubmit">
+        Submit
+    </button>
+</form>
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<a href="https://carcassonne-alpine-meadows.herokuapp.com/sign_up.html"> Sign up </a>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<a href="https://carcassonne-alpine-meadows.herokuapp.com/sign_in.html"> Sign in </a>
+
+</body>
+</html>

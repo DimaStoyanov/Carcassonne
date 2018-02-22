@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Signed up</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+</head>
+<body>
+<p th:text="'Congratulations! You have signed up. Now you should check your email.'"/>
+<p th:text="'Your username: ' + ${username}"/>
+<p th:text="'Your email: ' + ${email}"/>
+<p>
+    <a href="https://carcassonne-alpine-meadows.herokuapp.com/sign_in.html"> Sign in </a>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    <a href="https://carcassonne-alpine-meadows.herokuapp.com/send_email.html"> I don't receive a letter</a>
+</p>
+</body>
+</html>

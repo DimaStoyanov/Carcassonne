@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Verifying account</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+</head>
+<body>
+<p th:text="'Account successfully verified.'"/>
+<p th:text="'Your username: ' + ${username}"/>
+<p th:text="'Your email: ' + ${email}"/>
+<p><a href="https://carcassonne-alpine-meadows.herokuapp.com/sign_in.html"> Sign in </a></p>
+</body>
+</html>

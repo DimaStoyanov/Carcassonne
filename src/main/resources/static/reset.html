@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Reset password</title>
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    <script>
+        function onSubmit(token) {
+            document.getElementById("reset").submit();
+        }
+    </script>
+</head>
+<body>
+
+
+<form id="reset" action="https://carcassonne-alpine-meadows.herokuapp.com/reset_password" method="POST">
+    Username or email: <input type="text" required name="login"><br><br>
+    Password: &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp;
+     &nbsp;
+    <input type="password" name="password" required>
+    <br>
+    <button
+            class="g-recaptcha"
+            data-sitekey="6LdIYToUAAAAABwwP2YaGgGMv9eaOhlVLz0s3KIa"
+            data-callback="onSubmit">
+        Submit
+    </button>
+</form>
+<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<a href="sign_up.html"> Sign up </a>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;
+<a href="https://carcassonne-alpine-meadows.herokuapp.com/sign_in.html"> Sign in </a>
+
+</body>
+</html>

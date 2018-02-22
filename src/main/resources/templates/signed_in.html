@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Signed up</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+</head>
+<body>
+<p th:text="'Hello ' + ${username} + '!'"/>
+<p th:text="'Your token: ' + ${token}"/>
+<p th:text="'It must be saved to local browser srorage'"/>
+<p><a href="https://carcassonne-alpine-meadows.herokuapp.com/sign_up.html"> Log out </a></p>
+</body>
+</html>
