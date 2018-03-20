@@ -1,22 +1,16 @@
 package carcassone.alpine_meadows.servlets;
 
 import carcassone.alpine_meadows.db.datasets.Player;
-import carcassone.alpine_meadows.db.datasets.PlayerConfirmation;
-import carcassone.alpine_meadows.db.repositories.PlayerConfirmationRepository;
 import carcassone.alpine_meadows.db.repositories.PlayerRepository;
 import carcassone.alpine_meadows.utils.SendEmail;
-import de.mkammerer.argon2.Argon2;
-import de.mkammerer.argon2.Argon2Factory;
-import io.jsonwebtoken.*;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import org.apache.log4j.Logger;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 
 import javax.servlet.http.HttpServletRequest;
@@ -36,17 +30,8 @@ public class SignUpServlet extends BaseServlet {
     private static final Logger log = Logger.getLogger(SignUpServlet.class);
 
 
-    public SignUpServlet(Key key, ConfigurableApplicationContext context, JedisPool jedisPool) {
-        super(context, jedisPool, key);
-    }
-
-    // Just for test
-    @RequestMapping(value = "/truncate")
-    public String truncateTable() {
-        playerConfirmationRepository.deleteAll();
-        playerRepository.deleteAll();
-        playerResetRepository.deleteAll();
-        return "error";
+    public SignUpServlet(PlayerRepository playerRepository, JedisPool jedisPool, Key key) {
+        super(playerRepository, jedisPool, key);
     }
 
     @RequestMapping(value = "/signing_up", method = RequestMethod.POST)
@@ -61,7 +46,7 @@ public class SignUpServlet extends BaseServlet {
             return "error_page";
         }
 
-        if (playerRepository.findTopByUsername(username) != null) {
+        if (playerRepository.findByUsername(username) != null) {
             model.addAttribute("type", "Bad request");
             model.addAttribute("description", "Not unique username");
             log.info("Not unique username");
@@ -69,7 +54,7 @@ public class SignUpServlet extends BaseServlet {
         }
 
 
-        if (playerRepository.findTopByEmail(email) != null) {
+        if (playerRepository.findByEmail(email) != null) {
             model.addAttribute("type", "Bad request");
             model.addAttribute("description", "Not unique email address");
             log.info("Not unique email address");
@@ -99,8 +84,7 @@ public class SignUpServlet extends BaseServlet {
 
 
         SendEmail.sendSignUpLetter(email, username, compactJws);
-        Player player = playerRepository.save(new Player(username, passwordHash, email));
-        playerConfirmationRepository.save(new PlayerConfirmation(player.getId(), compactJws));
+        playerRepository.save(new Player(username, passwordHash, email, compactJws));
         log.info(String.format("Player %s signed up", username));
 
         model.addAttribute("username", username);

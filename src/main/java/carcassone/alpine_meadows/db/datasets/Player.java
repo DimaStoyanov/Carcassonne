@@ -1,6 +1,9 @@
 package carcassone.alpine_meadows.db.datasets;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
 import java.io.Serializable;
 
 /**
@@ -22,6 +25,12 @@ public class Player implements Serializable {
     @Column(nullable = false)
     private boolean emailConfirmed;
 
+    @Column(unique = true)
+    private String confirmationToken;
+
+    @Column(unique = true)
+    private String resetToken;
+
     @Id
     @GeneratedValue
     private long id;
@@ -29,10 +38,11 @@ public class Player implements Serializable {
     protected Player() {
     }
 
-    public Player(String username, String password, String email) {
+    public Player(String username, String password, String email, String confirmationToken) {
         this.username = username;
         this.password = password;
         this.email = email;
+        this.confirmationToken = confirmationToken;
         emailConfirmed = false;
     }
 
@@ -70,6 +80,22 @@ public class Player implements Serializable {
 
     public void setUsername(String username) {
         this.username = username;
+    }
+
+    public String getConfirmationToken() {
+        return confirmationToken;
+    }
+
+    public void setConfirmationToken(String confirmationToken) {
+        this.confirmationToken = confirmationToken;
+    }
+
+    public String getResetToken() {
+        return resetToken;
+    }
+
+    public void setResetToken(String resetToken) {
+        this.resetToken = resetToken;
     }
 
     @Override

@@ -1,9 +1,7 @@
 package carcassone.alpine_meadows.servlets;
 
-import carcassone.alpine_meadows.db.pages.CaptchaVerify;
-import carcassone.alpine_meadows.db.repositories.PlayerConfirmationRepository;
 import carcassone.alpine_meadows.db.repositories.PlayerRepository;
-import carcassone.alpine_meadows.db.repositories.PlayerResetRepository;
+import carcassone.alpine_meadows.pages.CaptchaVerify;
 import de.mkammerer.argon2.Argon2;
 import de.mkammerer.argon2.Argon2Factory;
 import io.jsonwebtoken.Claims;
@@ -11,14 +9,13 @@ import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureException;
 import org.apache.log4j.Logger;
-import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.ui.Model;
 import org.springframework.web.client.RestTemplate;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.security.Key;
 import java.util.Objects;
 
@@ -30,8 +27,6 @@ import java.util.Objects;
 public class BaseServlet {
 
     final PlayerRepository playerRepository;
-    final PlayerResetRepository playerResetRepository;
-    final PlayerConfirmationRepository playerConfirmationRepository;
     final JedisPool jedisPool;
     final Key key;
 
@@ -40,13 +35,13 @@ public class BaseServlet {
     private static final RestTemplate restTemplate = new RestTemplate();
     private static final String captchaSecret = "6LdIYToUAAAAABabCpd3LjNHfyNzDQyEStkuDpF4";
 
-    protected BaseServlet(ConfigurableApplicationContext context, JedisPool jedisPool, Key key) {
-        playerRepository = context.getBean(PlayerRepository.class);
-        playerResetRepository = context.getBean(PlayerResetRepository.class);
-        playerConfirmationRepository = context.getBean(PlayerConfirmationRepository.class);
+    @Autowired
+    public BaseServlet(PlayerRepository playerRepository, JedisPool jedisPool, Key key) {
+        this.playerRepository = playerRepository;
         this.jedisPool = jedisPool;
         this.key = key;
     }
+
 
     // Allows no more than 2 requests per second from one user
     boolean checkLimitRequestsPerSecond(HttpServletRequest request, Model model, Logger log) {

@@ -75,8 +75,8 @@ public final class SendEmail {
 
         private static final Properties props = System.getProperties();
 
-        private static final String username = "carcassone.game@gmail.com";
-        private static final String password = "ConcurentHashMap";
+        private static final String username = System.getenv("email");
+        private static final String password = System.getenv("password");
 
         static {
             props.setProperty("mail.smtp.host", "smtp.gmail.com");
@@ -107,6 +107,7 @@ public final class SendEmail {
 
                 final Session session = Session.getDefaultInstance(props,
                         new Authenticator() {
+                            @Override
                             protected PasswordAuthentication getPasswordAuthentication() {
                                 return new PasswordAuthentication(username, password);
                             }

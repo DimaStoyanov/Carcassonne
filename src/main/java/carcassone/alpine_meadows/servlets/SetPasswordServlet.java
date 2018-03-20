@@ -1,21 +1,15 @@
 package carcassone.alpine_meadows.servlets;
 
 import carcassone.alpine_meadows.db.datasets.Player;
-import carcassone.alpine_meadows.db.datasets.PlayerReset;
 import carcassone.alpine_meadows.db.repositories.PlayerRepository;
-import carcassone.alpine_meadows.db.repositories.PlayerResetRepository;
-import de.mkammerer.argon2.Argon2;
-import de.mkammerer.argon2.Argon2Factory;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureException;
 import org.apache.log4j.Logger;
-import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import redis.clients.jedis.JedisPool;
 
@@ -32,39 +26,28 @@ public class SetPasswordServlet extends BaseServlet {
 
     private static final Logger log = Logger.getLogger(SetPasswordServlet.class);
 
-    public SetPasswordServlet(ConfigurableApplicationContext context, Key key, JedisPool jedisPool) {
-        super(context, jedisPool, key);
+    public SetPasswordServlet(PlayerRepository playerRepository, JedisPool jedisPool, Key key) {
+        super(playerRepository, jedisPool, key);
     }
 
     @RequestMapping(value = "/set_password")
     public String setPassword(@RequestParam(name = "token") String token, Model model,
                               HttpServletRequest request) {
 
-        if(checkLimitRequestsPerSecond(request, model, log)){
+        if (checkLimitRequestsPerSecond(request, model, log)) {
             return "error_page";
         }
 
-        PlayerReset playerReset = playerResetRepository.findTopByToken(token);
+        Player player = playerRepository.findByResetToken(token);
 
-        if (playerReset == null) {
-            log.info("Incorrect token, playerReset not found");
+        if (player == null) {
+            log.info("Incorrect token, player not found");
             model.addAttribute("type", "Bad request");
             model.addAttribute("description", "Incorrect token");
             return "error_page";
         }
 
-        Player player = playerRepository.findOne(playerReset.getId());
-        playerResetRepository.delete(playerReset);
-
-
-        if (player == null) {
-            log.error("Token is correct, but player does not exist");
-            model.addAttribute("type", "Internal Server Error");
-            model.addAttribute("description", "Player does not registered");
-            return "error_page";
-        }
-
-        if(!checkToken(token, "reset", player.getUsername(), model, log)){
+        if (!checkToken(token, "reset", player.getUsername(), model, log)) {
             return "error_page";
         }
 
@@ -78,16 +61,17 @@ public class SetPasswordServlet extends BaseServlet {
         }
 
         String password;
-        try{
+        try {
             Jws<Claims> claimsJws = Jwts.parser().setSigningKey(key).parseClaimsJws(token);
             password = claimsJws.getBody().get("password", String.class);
-        } catch (SignatureException e){
+        } catch (SignatureException e) {
             log.error(e);
             model.addAttribute("type", "Bad request");
             model.addAttribute("description", "Self-signed token");
             return "error_page";
         }
 
+        player.setResetToken(null);
         player.setPassword(password);
         playerRepository.save(player);
 

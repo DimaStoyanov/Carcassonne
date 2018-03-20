@@ -2,12 +2,9 @@ package carcassone.alpine_meadows.servlets;
 
 import carcassone.alpine_meadows.db.datasets.Player;
 import carcassone.alpine_meadows.db.repositories.PlayerRepository;
-import de.mkammerer.argon2.Argon2;
-import de.mkammerer.argon2.Argon2Factory;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.apache.log4j.Logger;
-import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -17,7 +14,6 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 
 import javax.servlet.http.HttpServletRequest;
-import java.net.URISyntaxException;
 import java.security.Key;
 import java.util.HashMap;
 import java.util.Map;
@@ -28,14 +24,13 @@ import java.util.Random;
  */
 
 @Controller
-public class SignInServlet extends BaseServlet{
+public class SignInServlet extends BaseServlet {
 
-    public SignInServlet(ConfigurableApplicationContext context, Key key, JedisPool jedisPool){
-        super(context, jedisPool, key);
+    public SignInServlet(PlayerRepository playerRepository, JedisPool jedisPool, Key key) {
+        super(playerRepository, jedisPool, key);
     }
 
     private static final Logger log = Logger.getLogger(SignInServlet.class);
-
 
 
     @RequestMapping(value = "/signing_in", method = RequestMethod.POST)
@@ -49,7 +44,7 @@ public class SignInServlet extends BaseServlet{
             return "error_page";
         }
 
-        Player player = playerRepository.findTopByUsername(username);
+        Player player = playerRepository.findByUsername(username);
 
         if (player == null || !argon2.verify(player.getPassword(), password)) {
             log.info("Incorrect username/password");
@@ -84,9 +79,9 @@ public class SignInServlet extends BaseServlet{
 
 
             // To have ability to delete token of user
-            jedis.setex(username, 60 * 60 * 24,  compactJws);
+            jedis.setex(username, 60 * 60 * 24, compactJws);
             // To have ability fast check if token is valid
-            jedis.setex(compactJws, 60 * 60 * 24,  username);
+            jedis.setex(compactJws, 60 * 60 * 24, username);
         }
 
 

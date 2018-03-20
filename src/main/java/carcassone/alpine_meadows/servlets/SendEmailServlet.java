@@ -1,13 +1,11 @@
 package carcassone.alpine_meadows.servlets;
 
 import carcassone.alpine_meadows.db.datasets.Player;
-import carcassone.alpine_meadows.db.datasets.PlayerConfirmation;
-import carcassone.alpine_meadows.db.datasets.PlayerReset;
+import carcassone.alpine_meadows.db.repositories.PlayerRepository;
 import carcassone.alpine_meadows.utils.SendEmail;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.apache.log4j.Logger;
-import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -32,8 +30,8 @@ public class SendEmailServlet extends BaseServlet {
 
     private static final Logger log = Logger.getLogger(SetPasswordServlet.class);
 
-    public SendEmailServlet(ConfigurableApplicationContext context, Key key, JedisPool jedisPool) {
-        super(context, jedisPool, key);
+    public SendEmailServlet(PlayerRepository playerRepository, JedisPool jedisPool, Key key) {
+        super(playerRepository, jedisPool, key);
     }
 
     @RequestMapping(value = "/send_email_req", method = RequestMethod.POST)
@@ -48,9 +46,9 @@ public class SendEmailServlet extends BaseServlet {
             return "error_page";
         }
 
-        Player player = playerRepository.findTopByUsername(login);
+        Player player = playerRepository.findByUsername(login);
         if (player == null) {
-            player = playerRepository.findTopByEmail(login);
+            player = playerRepository.findByEmail(login);
         }
 
         if (player == null) {
@@ -81,8 +79,6 @@ public class SendEmailServlet extends BaseServlet {
                     return "error_page";
                 }
 
-                PlayerConfirmation playerConfirmation = playerConfirmationRepository
-                        .findOne(player.getId());
 
                 Map<String, Object> payload = new HashMap<>();
                 payload.put("target", "sign_up");
@@ -94,9 +90,9 @@ public class SendEmailServlet extends BaseServlet {
                         .signWith(SignatureAlgorithm.HS512, key)
                         .compact();
 
-                playerConfirmation.setToken(compactJws);
+                player.setConfirmationToken(compactJws);
                 SendEmail.sendSignUpLetter(player.getEmail(), player.getUsername(), compactJws);
-                playerConfirmationRepository.save(playerConfirmation);
+                playerRepository.save(player);
 
                 log.info(String.format("Player %s re-requested sign up letter", player.getUsername()));
                 break;
@@ -111,7 +107,7 @@ public class SendEmailServlet extends BaseServlet {
                     return "error_page";
                 }
 
-                if(password.equals("")) {
+                if (password.equals("")) {
                     log.info("missing parameter password");
                     model.addAttribute("type", "Bad request");
                     model.addAttribute("description", "Missing required parameter password");
@@ -130,24 +126,17 @@ public class SendEmailServlet extends BaseServlet {
                         .signWith(SignatureAlgorithm.HS512, key)
                         .compact();
 
-                PlayerReset playerReset = playerResetRepository.findOne(player.getId());
-
-                if(playerReset == null){
-                    playerReset = new PlayerReset(player.getId(), compactJws);
-                } else {
-                    playerReset.setToken(compactJws);
-                }
-
+                player.setResetToken(compactJws);
                 SendEmail.sendLostPasswordLetter(player.getEmail(), player.getUsername(), compactJws);
-                playerResetRepository.save(playerReset);
+                playerRepository.save(player);
                 log.info(String.format("Player %s requested reset account", player.getUsername()));
                 break;
 
-                default:
-                    log.error(String.format("Unknown type %s", type));
-                    model.addAttribute("type", "Internal Server Error");
-                    model.addAttribute("description", String.format("Unknown type %s", type));
-                    return "error_page";
+            default:
+                log.error(String.format("Unknown type %s", type));
+                model.addAttribute("type", "Internal Server Error");
+                model.addAttribute("description", String.format("Unknown type %s", type));
+                return "error_page";
         }
 
         model.addAttribute("username", player.getUsername());

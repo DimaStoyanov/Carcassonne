@@ -1,4 +1,4 @@
-package carcassone.alpine_meadows.db.pages;
+package carcassone.alpine_meadows.pages;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
