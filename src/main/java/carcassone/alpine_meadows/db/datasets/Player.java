@@ -25,10 +25,10 @@ public class Player implements Serializable {
     @Column(nullable = false)
     private boolean emailConfirmed;
 
-    @Column(unique = true)
+    @Column(unique = true, length = 1024)
     private String confirmationToken;
 
-    @Column(unique = true)
+    @Column(unique = true, length = 1024)
     private String resetToken;
 
     @Id
